@@ -7,7 +7,7 @@ updates:
       time: "23:00"
     open-pull-requests-limit: 10
     reviewers:
-    - mdgreenwald
+    - ronazst
     labels:
     - "npm"
     - "dependencies"
@@ -20,7 +20,7 @@ updates:
       time: "23:00"
     open-pull-requests-limit: 10
     reviewers:
-    - mdgreenwald
+    - ronazst
     labels:
     - "docker"
     - "dependencies"

@@ -10,32 +10,34 @@ import * as semver from 'semver';
 import * as toolCache from '@actions/tool-cache';
 import * as core from '@actions/core';
 
+
 const sopsToolName = 'sops';
-const stableSopsVersion = 'v3.7.3';
+
+// this value is fallback version
+const stableSopsVersion = 'v3.8.1';
+
 const sopsAllReleasesUrl = 'https://api.github.com/repos/getsops/sops/releases';
 
 function getExecutableExtension(): string {
-    if (os.type().match(/^Win/)) {
+    if (os.platform() === 'win32') {
         return '.exe';
     }
     return '';
 }
 
 function getSopsDownloadURL(version: string): string {
-    switch (os.type()) {
-        case 'Linux':
-            return util.format('https://github.com/getsops/sops/releases/download/%s/sops-%s.linux.amd64', version, version);
-
-        case 'Darwin':
-            return util.format('https://github.com/getsops/sops/releases/download/%s/sops-%s.darwin.amd64', version, version);
-
-        case 'Windows_NT':
-        default:
-            return util.format('https://github.com/getsops/sops/releases/download/%s/sops-%s.exe', version, version);
+    let downloadSuffix: string
+    if (os.platform() === 'win32') {
+        downloadSuffix = 'exe'
+    } else if(os.arch() === 'x64') {
+        downloadSuffix = `${os.platform()}.amd64`
+    } else {
+        downloadSuffix = `${os.platform()}.${os.arch()}`
     }
+    return `https://github.com/getsops/sops/releases/download/${version}/sops-${version}.${downloadSuffix}`
 }
 
-async function getstableSopsVersion(): Promise<string> {
+async function getStableSopsVersion(): Promise<string> {
     try {
         const downloadPath = await toolCache.downloadTool(sopsAllReleasesUrl);
         const responseArray = JSON.parse(fs.readFileSync(downloadPath, 'utf8').toString().trim());
@@ -61,14 +63,13 @@ async function getstableSopsVersion(): Promise<string> {
 }
 
 
-var walkSync = function (dir, filelist, fileToFind) {
-    var files = fs.readdirSync(dir);
+const walkSync = function (dir, filelist, fileToFind) {
+    const files = fs.readdirSync(dir);
     filelist = filelist || [];
     files.forEach(function (file) {
         if (fs.statSync(path.join(dir, file)).isDirectory()) {
             filelist = walkSync(path.join(dir, file), filelist, fileToFind);
-        }
-        else {
+        } else {
             core.debug(file);
             if (file == fileToFind) {
                 filelist.push(path.join(dir, file));
@@ -79,10 +80,10 @@ var walkSync = function (dir, filelist, fileToFind) {
 };
 
 async function downloadSops(version: string): Promise<string> {
-    if (!version) { version = await getstableSopsVersion(); }
-    let cachedToolpath = toolCache.find(sopsToolName, version);
-    if (!cachedToolpath) {
-        let sopsDownloadPath;
+    if (!version) { version = await getStableSopsVersion(); }
+    let cachedToolPath = toolCache.find(sopsToolName, version);
+    if (!cachedToolPath) {
+        let sopsDownloadPath: fs.PathLike;
         try {
             sopsDownloadPath = await toolCache.downloadTool(getSopsDownloadURL(version));
         } catch (exception) {
@@ -90,34 +91,34 @@ async function downloadSops(version: string): Promise<string> {
         }
 
         fs.chmodSync(sopsDownloadPath, '777');
-        cachedToolpath = await toolCache.cacheFile(sopsDownloadPath, sopsToolName + getExecutableExtension(), sopsToolName, version);
+        cachedToolPath = await toolCache.cacheFile(sopsDownloadPath, sopsToolName + getExecutableExtension(), sopsToolName, version);
     }
 
-    const sopspath = findSops(cachedToolpath);
-    if (!sopspath) {
-        throw new Error(util.format("Sops executable not found in path ", cachedToolpath));
+    const sopsPath = findSops(cachedToolPath);
+    if (!sopsPath) {
+        throw new Error(util.format("Sops executable not found in path ", cachedToolPath));
     }
 
-    fs.chmodSync(sopspath, '777');
-    return sopspath;
+    fs.chmodSync(sopsPath, '777');
+    return sopsPath;
 }
 
 function findSops(rootFolder: string): string {
     fs.chmodSync(rootFolder, '777');
-    var filelist: string[] = [];
-    walkSync(rootFolder, filelist, sopsToolName + getExecutableExtension());
-    if (!filelist) {
+    const files: string[] = [];
+    walkSync(rootFolder, files, sopsToolName + getExecutableExtension());
+    if (!files) {
         throw new Error(util.format("Sops executable not found in path ", rootFolder));
     }
     else {
-        return filelist[0];
+        return files[0];
     }
 }
 
 async function run() {
     let version = core.getInput('version', { 'required': true });
     if (version.toLocaleLowerCase() === 'latest') {
-        version = await getstableSopsVersion();
+        version = await getStableSopsVersion();
     } else if (!version.toLocaleLowerCase().startsWith('v')) {
         version = 'v' + version;
     }
@@ -125,7 +126,6 @@ async function run() {
     let cachedPath = await downloadSops(version);
 
     try {
-
         if (!process.env['PATH'].startsWith(path.dirname(cachedPath))) {
             core.addPath(path.dirname(cachedPath));
         }
