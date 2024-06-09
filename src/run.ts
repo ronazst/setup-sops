@@ -42,7 +42,7 @@ async function getStableSopsVersion(): Promise<string> {
         const downloadPath = await toolCache.downloadTool(sopsAllReleasesUrl);
         const responseArray = JSON.parse(fs.readFileSync(downloadPath, 'utf8').toString().trim());
         let latestSopsVersion = semver.clean(stableSopsVersion);
-        responseArray.forEach(response => {
+        responseArray.forEach((response: { tag_name: { toString: () => string; }; }) => {
             if (response && response.tag_name) {
                 let currentSopsVerison = semver.clean(response.tag_name.toString());
                 if (currentSopsVerison) {
@@ -63,7 +63,7 @@ async function getStableSopsVersion(): Promise<string> {
 }
 
 
-const walkSync = function (dir, filelist, fileToFind) {
+const walkSync = function (dir: string, filelist: string[], fileToFind: string) {
     const files = fs.readdirSync(dir);
     filelist = filelist || [];
     files.forEach(function (file) {
