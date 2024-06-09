@@ -10,7 +10,7 @@ Acceptable values are latest or any semantic version string like v3.8.1 Use this
 
 ```yaml
 - name: Setup CNCF SOPS
-  uses: ronazst/setup-sops@v1.0.0
+  uses: ronazst/setup-cncf-sops@v1
   with:
     version: '<version>' # optional, default is latest stable
 ```

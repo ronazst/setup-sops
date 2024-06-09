@@ -5,9 +5,12 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build-release:
-    name: Create Release
+    name: Create release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -23,4 +26,5 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           body_path: CHANGELOG.md
