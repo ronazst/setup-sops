@@ -1,17 +1,20 @@
 name: "build-test"
+
 on: # rebuild any PRs and main branch changes
   pull_request:
   push:
     branches:
       - main
-      - 'releases/*'
 
 jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: npm install && npm run build
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build code
+        run: npm install && npm run build
   test:
     name: Test on ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ubuntu-latest
@@ -23,8 +26,11 @@ jobs:
           - os: windows
             arch: arm64
     steps:
-    - uses: actions/checkout@v4
-    - uses: ./
-      id: install
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run install SOPS action
+      uses: ./
+
     - name: Get the SOPS version
       run: sops --version

@@ -11,16 +11,3 @@ updates:
     labels:
     - "npm"
     - "dependencies"
-
-  - package-ecosystem: "docker"
-    # Files stored in repository root
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      time: "23:00"
-    open-pull-requests-limit: 10
-    reviewers:
-    - ronazst
-    labels:
-    - "docker"
-    - "dependencies"
